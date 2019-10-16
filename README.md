@@ -21,7 +21,7 @@ The container will be destroyed right after we leave it, but the `monero-static-
 docker run -it --rm --name monero-static monero-static-docker
 
   # Pull the changes from the monero repo
-git pull
+cd monero && git pull
 
   # Build the new binaries
 make clean

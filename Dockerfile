@@ -128,4 +128,3 @@ RUN set -ex \
     then make -j$(nproc) release-static ; \
     else make -j$NPROC release-static ; \
     fi
-RUN cd monero
