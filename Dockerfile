@@ -17,7 +17,8 @@ RUN set -ex && \
         bzip2 \
         xsltproc \
         gperf \
-        unzip
+        unzip \
+        ccache
 
 WORKDIR /usr/local
 
