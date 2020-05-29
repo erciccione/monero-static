@@ -25,7 +25,7 @@ build() {
   # getting last tag
   lastTag=$(docker exec -it monero-static-container bash -c 'cd monero && git pull --all &> /dev/null && git tag -l | sort -V | tail  -1')
 
-  printf "\n-> What version you want to build?\n"
+  printf "\n-> What version do you want to build?\n"
   printf "\nmaster is bleeding edge and can contain bugs. Build the latest release if you are unsure.\n\n"
   printf "1) Build master"
   printf "\n2) Build latest release: $lastTag\n"
