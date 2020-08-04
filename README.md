@@ -3,11 +3,11 @@ Monero Static is a simple tool that allows to build your own release of the Mone
 This repository contains a Dockerfile and a bash script. The script runs the Dockerfile and will start building the latest Monero software as soon as it's launched. The script will create a reusable image that can be used every time you want to have an updated version of the Monero software. After compilation, the resulting binaries will be available in a 'bin' folder.  
 The first time you launch the script, it will take some time to build the dependencies and the softwate, but as said above, once the image is installed you can reuse it multple times, decreasing dramatically the amount of time needed to build the software.
 
-If the image is already installed, you will be asked if you want to build 'master' or the latest release (currently 0.16.0.0). The 'master' branch contains all the current progresses of the monero developers and it's considered unstable, if you don't care about testing new fancy features, just build the latest stable release.
+If the image is already installed, you will be asked if you want to build 'master' or the latest release. The 'master' branch contains all the current progresses of the monero developers and it's considered unstable, if you don't care about testing new fancy features, just build the latest stable release.
 
-The script is tested on Debian Buster and Ubuntu 18 and could not work in other distributions.
+The script is tested on Debian Buster, Ubuntu 18 and Fedora 32.
 
-Make sure to install the necessary dependencies, then run the script by using the command `./run.sh`
+Make sure to install Docker, then run the script by using the command `./run.sh`
 
 ### Install the dependencies
 
