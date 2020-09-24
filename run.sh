@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# TODO: Add GUI
+
 runcontainer() {
   printf "\n-> Creating container...\n"
   docker run -it -d --name monero-static-container --net host --rm monero-static bash &> /dev/null
@@ -7,14 +9,13 @@ runcontainer() {
 
 copy() {
   printf "\n-> Importing binaries...\n"
-  docker cp monero-static-container:/home/monero/build/Linux/master/release/bin .
+  docker cp $1 .
   printf "\n-> Binaries copied to 'bin' folder\n"
 }
 
 dexec() {
 if docker exec -it monero-static-container bash -c "$1"; then
   printf "\n-> Done.\n"
-  copy
 else
   printf "\n-> Exiting...\n"
 fi
@@ -33,37 +34,32 @@ build() {
 
   while true; do
     read version
+    
 
     if [[ $version -eq 1 ]]; then
       printf "\n-> Building Master...\n"
-      sleep 2
-      dexec "cd monero && make release-static"
+      dexec "cd monero && git submodule update --init --force && make release-static"
+      copy monero-static-container:/home/monero/build/Linux/master/release/bin
       break
     elif [[ $version -eq 2 ]]; then
       printf "\n-> Building release $lastTag\n"
-      sleep 2
       # ${lastTag::-1} is superugly
-      dexec "cd monero && git checkout ${lastTag::-1} && make release-static"
+      dexec "cd monero && git checkout ${lastTag::-1} && git submodule update --init --force && make release-static"
+      copy monero-static-container:/home/monero/build/Linux/_HEAD_detached_at_${lastTag::-1}_/release/bin
       break
     else
       printf "\nChoose 1 or 2\n"
     fi
-    # Copy the binaries
-    copy
-
   done
 }
 
-
 if ! docker images | grep "monero-static" &> /dev/null; then
   printf "\n-> Image not present. Building it...\n"
-  sleep 2
   docker build . -t monero-static
   runcontainer
   copy
 else
   printf "\n-> Image found. Using it to build the container\n"
-  sleep 2
   runcontainer
   build
 fi
