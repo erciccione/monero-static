@@ -9,22 +9,18 @@ runcontainer() {
 
 copy() {
   printf "\n-> Importing binaries...\n"
-  docker cp $1 .
+  docker cp $1 . || printf "\n-> Something went wrong, binaries not copied" && exit
   printf "\n-> Binaries copied to 'bin' folder\n"
 }
 
 dexec() {
-if docker exec -it monero-static-container bash -c "$1"; then
-  printf "\n-> Done.\n"
-else
-  printf "\n-> Exiting...\n"
-fi
+  docker exec -it monero-static-container bash -c "$1" || exit
 }
 
 build() {
   printf "\n-> Fetching code...\n"
   # getting last tag
-  lastTag=$(docker exec -it monero-static-container bash -c 'cd monero && git pull --all &> /dev/null && git tag -l | sort -V | tail  -1')
+  lastTag=$(docker exec -it monero-static-container bash -c 'cd monero && git pull --all &> /dev/null && git tag -l | sort -V | tail  -1') || exit
 
   printf "\n-> What version do you want to build?\n"
   printf "\nmaster is bleeding edge and can contain bugs. Build the latest release if you are unsure.\n\n"
@@ -34,7 +30,6 @@ build() {
 
   while true; do
     read version
-    
 
     if [[ $version -eq 1 ]]; then
       printf "\n-> Building Master...\n"
@@ -53,9 +48,11 @@ build() {
   done
 }
 
+trap "printf '\n--> Exiting\n' ; docker rm -f monero-static-container &> /dev/null" EXIT
+
 if ! docker images | grep "monero-static" &> /dev/null; then
   printf "\n-> Image not present. Building it...\n"
-  docker build . -t monero-static
+  docker build . -t monero-static || exit
   runcontainer
   copy
 else
@@ -63,6 +60,3 @@ else
   runcontainer
   build
 fi
-
-# Brutally delete container
-docker rm monero-static-container -f &> /dev/null
