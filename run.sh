@@ -88,7 +88,7 @@ EOF
 if ! docker images | grep "monero-static" &> /dev/null; then
   printf "This is your first time using Monero Static, Welcome!"
   printf "\nYou don't have to do anything. I'm about to build the latest Monero CLI software"
-  printf "\nand copy it inside a 'bin' folder.\n"
+  printf "\nand copy it inside a 'bin' folder. Get yourself a cofee, this will take some time.\n"
   sleep 5
 
   printf "\n-> Building the Docker image...\n"
