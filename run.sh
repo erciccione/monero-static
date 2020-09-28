@@ -10,7 +10,7 @@ runcontainer() {
 copy() {
   printf "\n-> Importing binaries...\n"
   docker cp $1 . || printf "\n-> Something went wrong, binaries not copied" && exit
-  printf "\n-> Binaries copied to 'bin' folder\n"
+  printf "\n-> Binaries copied to 'bin' folder in " && pwd
 }
 
 dexec() {
@@ -26,7 +26,7 @@ build() {
   printf "\nmaster is bleeding edge and can contain bugs. Build the latest release if you are unsure.\n\n"
   printf "1) Build master"
   printf "\n2) Build latest release: $lastTag\n"
-  printf "\nWhat do you want to do? (choose 1 or 2)\n"
+  printf "\nWhat do you want to do? (Choose 1 or 2. Press ctrl + c or type 'exit' if you want to leave)\n"
 
   while true; do
     read version
@@ -42,21 +42,61 @@ build() {
       dexec "cd monero && git checkout ${lastTag::-1} && git submodule update --init --force && make release-static"
       copy monero-static-container:/home/monero/build/Linux/_HEAD_detached_at_${lastTag::-1}_/release/bin
       break
+    elif [[ $version -eq "exit" ]]; then
+      exit
     else
-      printf "\nChoose 1 or 2\n"
+      printf "\nChoose 1 or 2. Press ctrl + c or type 'exit' if you want to leave\n"
     fi
   done
 }
 
-trap "printf '\n--> Exiting\n' ; docker rm -f monero-static-container &> /dev/null" EXIT
+
+trap "printf '\n-> Exiting\n' ; docker rm -f monero-static-container &> /dev/null" EXIT
+
+cat << "EOF"
+
+    .-----------------------------------------.
+    |              MONERO STATIC              |
+    |                   v1.0                  |
+    '-----------------------------------------'
+                'r1kWQ@@@@@@QWE]r'                
+            `^XQ@@@@@@@@@@@@@@@@@@QX*`            
+          ~e@@@@@@@@@@@@@@@@@@@@@@@@@@k~          
+        '9@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@9,        
+       i@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@i       
+      S@@@@1;O@@@@@@@@@@@@@@@@@@@@@@R;\@@@@k      
+     u@@@@@1  _O@@@@@@@@@@@@@@@@@@O_  |@@@@@u     
+    ,@@@@@@1    ,k@@@@@@@@@@@@@@k_    |@@@@@@,    
+    o@@@@@@1      'e@@@@@@@@@@e,      |@@@@@@o    
+    g@@@@@@1        'y@@@@@@e'        |@@@@@@W    
+    g@@@@@@1   `u:    -x@@y-    :]`   |@@@@@@W    
+    o@@@@@@1   `mwS;    ``    ;uwX`   |@@@@@@o    
+    ,@@@@@@1   `mXXXS^      ;SXXXX`   |@@@@@@,    
+     ''''''`   `mXXXXwar``^awXXXXX`   `''''''     
+               `mXXXXXXXeeXXXXXXXX`               
+       ,z{{{{{{]wXXXXXXXXXXXXXXXXX]{{{{{{1,       
+        `LwXXXXXXXXXXXXXXXXXXXXXXXXXXXXwL-        
+          '|eXXXXXXXXXXXXXXXXXXXXXXXXe\'          
+             _\oXXXXXXXXXXXXXXXXXXo\:             
+                `:^\1uZmXXmZj1\^:-            
+    .------------------------------------------.
+    |       Build your own Monero Release      |
+    |             - By ErCiccione -            |
+    '------------------------------------------'                                                                          
+EOF
 
 if ! docker images | grep "monero-static" &> /dev/null; then
-  printf "\n-> Image not present. Building it...\n"
+  printf "This is your first time using Monero Static, Welcome!"
+  printf "\nYou don't have to do anything. I'm about to build the latest Monero CLI software"
+  printf "\nand copy it inside a 'bin' folder.\n"
+  sleep 5
+
+  printf "\n-> Building the Docker image...\n"
   docker build . -t monero-static || exit
   runcontainer
   copy
 else
-  printf "\n-> Image found. Using it to build the container\n"
+  printf "Welcome back! I'm about to create your Monero CLI release.\n"
   runcontainer
   build
 fi
