@@ -2,7 +2,11 @@
 
 # TODO: Add GUI
 
+# We always delete the container when exiting. This also avoid having orphan containers in case of SIGTERM
+trap "printf '\n-> Exiting\n' ; docker rm -f monero-static-container &> /dev/null" EXIT
+
 runcontainer() {
+  # Start detached container to make it available for successive commands. We use '--net host' to avoid possible issues with VPNs or network configurations.
   printf "\n-> Creating container...\n"
   docker run -it -d --name monero-static-container --net host --rm monero-static bash &> /dev/null
 }
@@ -38,7 +42,7 @@ build() {
       break
     elif [[ $version -eq 2 ]]; then
       printf "\n-> Building release $lastTag\n"
-      # ${lastTag::-1} is superugly
+      # ${lastTag::-1} is ugly, but it's needed to avoid that space at the end.
       dexec "cd monero && git checkout ${lastTag::-1} && git submodule update --init --force && make release-static"
       copy monero-static-container:/home/monero/build/Linux/_HEAD_detached_at_${lastTag::-1}_/release/bin
       break
@@ -51,8 +55,7 @@ build() {
 }
 
 
-trap "printf '\n-> Exiting\n' ; docker rm -f monero-static-container &> /dev/null" EXIT
-
+# Introduction with Monero logo
 cat << "EOF"
 
     .-----------------------------------------.
@@ -85,6 +88,7 @@ cat << "EOF"
     '------------------------------------------'                                                                          
 EOF
 
+# Main
 if ! docker images | grep "monero-static" &> /dev/null; then
   printf "This is your first time using Monero Static, Welcome!"
   printf "\nYou don't have to do anything. I'm about to build the latest Monero CLI software"
