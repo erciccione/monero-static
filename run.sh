@@ -98,7 +98,7 @@ if ! docker images | grep "monero-static" &> /dev/null; then
   printf "\n-> Building the Docker image...\n"
   docker build . -t monero-static || exit
   runcontainer
-  copy
+  copy monero-static-container:/home/monero/build/Linux/master/release/bin
 else
   printf "Welcome back! I'm about to create your Monero CLI release.\n"
   runcontainer
