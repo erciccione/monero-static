@@ -2,7 +2,7 @@
 
 # TODO: Add GUI
 
-# We always delete the container when exiting. This also avoid having orphan containers in case of SIGTERM
+# We always delete the container when exiting. This also avoids having orphan containers in case of SIGTERM
 trap "printf '\n-> Exiting\n' ; docker rm -f monero-static-container &> /dev/null" EXIT
 
 runcontainer() {
@@ -11,25 +11,29 @@ runcontainer() {
   docker run -it -d --name monero-static-container --net host --rm monero-static bash &> /dev/null
 }
 
-copy() {
-  printf "\n-> Importing binaries...\n"
-  docker cp $1 . || printf "\n-> Something went wrong, binaries not copied" && exit
-  printf "\n-> Binaries copied to 'bin' folder in " && pwd
-}
-
-dexec() {
-  docker exec -it monero-static-container bash -c "$1" || exit
+# Get latest tag
+get_tag() {
+  tag=$(curl -s -o- https://api.github.com/repos/monero-project/monero-gui/releases/latest | jq -r '.tag_name') || exit
 }
 
 build() {
-  printf "\n-> Fetching code...\n"
-  # getting last tag
-  lastTag=$(docker exec -it monero-static-container bash -c 'cd monero && git pull --all &> /dev/null && git tag -l | sort -V | tail  -1') || exit
 
-  printf "\n-> What version do you want to build?\n"
+  dexec() {
+  docker exec -it monero-static-container bash -c "$1" || exit
+  }
+
+  copy() {
+  printf "\n-> Importing binaries..."
+  docker cp $1 . && printf "\n-> Binaries copied to 'bin' folder in " && pwd || printf "\n-> Something went wrong, binaries not copied" && exit
+  
+  }
+
+  printf "\n-> Fetching code...\n"
+
+  printf "\nWhat version do you want to build?\n"
   printf "\nmaster is bleeding edge and can contain bugs. Build the latest release if you are unsure.\n\n"
   printf "1) Build master"
-  printf "\n2) Build latest release: $lastTag\n"
+  printf "\n2) Build latest release: $tag\n"
   printf "\nWhat do you want to do? (Choose 1 or 2. Press ctrl + c or type 'exit' if you want to leave)\n"
 
   while true; do
@@ -37,14 +41,13 @@ build() {
 
     if [[ $version -eq 1 ]]; then
       printf "\n-> Building Master...\n"
-      dexec "cd monero && git submodule update --init --force && make release-static"
+      dexec "git submodule update --init --force && make release-static -j2"
       copy monero-static-container:/home/monero/build/Linux/master/release/bin
       break
     elif [[ $version -eq 2 ]]; then
-      printf "\n-> Building release $lastTag\n"
-      # ${lastTag::-1} is ugly, but it's needed to avoid that space at the end.
-      dexec "cd monero && git checkout ${lastTag::-1} && git submodule update --init --force && make release-static"
-      copy monero-static-container:/home/monero/build/Linux/_HEAD_detached_at_${lastTag::-1}_/release/bin
+      printf "\n-> Building release $tag\n"
+      dexec "git checkout ${tag} &> /dev/null && git submodule update --init --force && make release-static -j2"
+      copy monero-static-container:/home/monero/build/Linux/_HEAD_detached_at_${tag}_/release/bin
       break
     elif [[ $version -eq "exit" ]]; then
       exit
@@ -54,13 +57,11 @@ build() {
   done
 }
 
-
 # Introduction with Monero logo
 cat << "EOF"
 
     .-----------------------------------------.
     |              MONERO STATIC              |
-    |                   v1.0                  |
     '-----------------------------------------'
                 'r1kWQ@@@@@@QWE]r'                
             `^XQ@@@@@@@@@@@@@@@@@@QX*`            
@@ -89,18 +90,24 @@ cat << "EOF"
 EOF
 
 # Main
+
 if ! docker images | grep "monero-static" &> /dev/null; then
   printf "This is your first time using Monero Static, Welcome!"
-  printf "\nYou don't have to do anything. I'm about to build the latest Monero CLI software"
-  printf "\nand copy it inside a 'bin' folder. Get yourself a cofee, this will take some time.\n"
-  sleep 5
+  printf "\nNow we prepare the environment where your release will"
+  printf "\nbe compiled, after you will have to choose if you want to"
+  printf "\nbuild master (the latest code) or the latest tag (last"
+  printf "\nworking code meant to be released).\n"
+  printf "\nGet yourself a coffee, this will take some time.\n"
 
   printf "\n-> Building the Docker image...\n"
+  get_tag
   docker build . -t monero-static || exit
   runcontainer
-  copy monero-static-container:/home/monero/build/Linux/master/release/bin
+  build
+  printf "-> DONE"
 else
   printf "Welcome back! I'm about to create your Monero CLI release.\n"
+  get_tag
   runcontainer
   build
 fi

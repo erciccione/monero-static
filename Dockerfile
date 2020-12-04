@@ -124,8 +124,6 @@ USER monero
 ARG NPROC
 RUN set -ex \
     && git clone --recursive https://github.com/monero-project/monero.git \
-    && cd monero \
-    && if [ -z "$NPROC" ] ; \
-    then make -j$(nproc) release-static ; \
-    else make -j$NPROC release-static ; \
-    fi
+    && cd monero 
+
+WORKDIR /home/monero
