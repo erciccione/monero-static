@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # TODO: Add GUI
+# TODO: add checks: docker installed, dependencies (git, curl, jq)
 
 # We always delete the container when exiting. This also avoids having orphan containers in case of SIGTERM
 trap "printf '\n-> Exiting\n' ; docker rm -f monero-static-container &> /dev/null" EXIT
@@ -41,12 +42,12 @@ build() {
 
     if [[ $version -eq 1 ]]; then
       printf "\n-> Building Master...\n"
-      dexec "git submodule update --init --force && make release-static -j2"
+      dexec "git pull && git submodule update --init --force && make release-static"
       copy monero-static-container:/home/monero/build/Linux/master/release/bin
       break
     elif [[ $version -eq 2 ]]; then
       printf "\n-> Building release $tag\n"
-      dexec "git checkout ${tag} &> /dev/null && git submodule update --init --force && make release-static -j2"
+      dexec "git pull --all && git checkout ${tag} &> /dev/null && git submodule update --init --force && make release-static"
       copy monero-static-container:/home/monero/build/Linux/_HEAD_detached_at_${tag}_/release/bin
       break
     elif [[ $version -eq "exit" ]]; then
