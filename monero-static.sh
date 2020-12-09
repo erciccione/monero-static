@@ -47,7 +47,7 @@ build() {
       break
     elif [[ $version -eq 2 ]]; then
       printf "\n-> Building release $tag\n"
-      dexec "git pull --all && git checkout ${tag} &> /dev/null && git submodule update --init --force && make release-static"
+      dexec "git pull --all && git checkout ${tag} &> /dev/null && git submodule update --init --force && make release-static -j3"
       copy monero-static-container:/home/monero/build/Linux/_HEAD_detached_at_${tag}_/release/bin
       break
     elif [[ $version -eq "exit" ]]; then
