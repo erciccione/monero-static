@@ -29,7 +29,9 @@ get_build() {
   while true; do
     read version
 
-    if [[ $version -eq 1 ]] || [[ $version -eq 2 ]]; then
+    if [[ $version -eq 1 ]]; then
+      break
+    elif [[ $version -eq 2 ]]; then
       break
     elif [[ $version -eq "exit" ]]; then
       exit
