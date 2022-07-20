@@ -18,7 +18,8 @@ RUN set -ex && \
         xsltproc \
         gperf \
         unzip \
-        ccache
+        ccache \
+        libunbound-dev
 
 WORKDIR /usr/local
 
@@ -35,7 +36,7 @@ RUN set -ex \
     && tar -xzf cmake-${CMAKE_VERSION}.tar.gz \
     && cd cmake-${CMAKE_VERSION} \
     && ./configure \
-    && make \
+    && make -j 6 \
     && make install
 
 ## Boost
@@ -52,16 +53,16 @@ RUN set -ex \
 ENV BOOST_ROOT /usr/local/boost_${BOOST_VERSION}
 
 # OpenSSL
-ARG OPENSSL_VERSION=1.1.1i
-ARG OPENSSL_HASH=e8be6a35fe41d10603c3cc635e93289ed00bf34b79671a3a4de64fcee00d5242
+ARG OPENSSL_VERSION=1.1.1q
+ARG OPENSSL_HASH=d7939ce614029cdff0b6c20f0e2e5703158a489a72b2507b8bd51bf8c8fd10ca
 RUN set -ex \
     && curl -s -O https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz \
     && echo "${OPENSSL_HASH}  openssl-${OPENSSL_VERSION}.tar.gz" | sha256sum -c \
     && tar -xzf openssl-${OPENSSL_VERSION}.tar.gz \
     && cd openssl-${OPENSSL_VERSION} \
     && ./Configure linux-x86_64 no-shared --static "$CFLAGS" \
-    && make build_generated \
-    && make libcrypto.a \
+    && make -j 6 build_generated \
+    && make -j 6 libcrypto.a \
     && make install
 ENV OPENSSL_ROOT_DIR=/usr/local/openssl-${OPENSSL_VERSION}
 
@@ -74,7 +75,7 @@ RUN set -ex \
     && test `git rev-parse HEAD` = ${ZMQ_HASH} || exit 1 \
     && ./autogen.sh \
     && ./configure --enable-static --disable-shared \
-    && make \
+    && make -j 6 \
     && make install \
     && ldconfig
 
@@ -96,7 +97,7 @@ RUN set -ex \
     && tar -xzf readline-${READLINE_VERSION}.tar.gz \
     && cd readline-${READLINE_VERSION} \
     && ./configure \
-    && make \
+    && make -j 6 \
     && make install
 
 # Sodium
@@ -108,22 +109,14 @@ RUN set -ex \
     && test `git rev-parse HEAD` = ${SODIUM_HASH} || exit 1 \
     && ./autogen.sh \
     && ./configure \
-    && make \
+    && make -j 6 \
     && make check \
     && make install
 
 WORKDIR /home
 
-# Create monero user
-RUN adduser --system --group --disabled-password monero
-
-# switch to user monero
-USER monero
-
 # Clone and build Monero
-ARG NPROC
 RUN set -ex \
-    && git clone --recursive https://github.com/monero-project/monero.git \
-    && cd monero 
+    && git clone --recursive https://github.com/monero-project/monero.git
 
 WORKDIR /home/monero
